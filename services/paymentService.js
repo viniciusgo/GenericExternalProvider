@@ -14,7 +14,7 @@ const statuses = {
     undefined: 'undefined',
     denied: 'denied'
 }
-const adapter = new FileSync('db/db.json')
+const adapter = new FileSync('./db/db.json')
 
 let db = undefined;
 function init() {
