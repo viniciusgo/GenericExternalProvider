@@ -112,3 +112,4 @@ dist
 *.code-workspace
 
 db/*
+!db/dummy.js
