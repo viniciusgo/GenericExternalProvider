@@ -2,12 +2,12 @@
 var express = require('express');
 var router = express.Router();
 
-var transactionService = require('../services/paymentService')
+var paymentService = require('../services/paymentService')
 
-transactionService.init();
+paymentService.init();
 
 router.all('/', function(req, res){
-    transactionService.create(req.body).then(document => {
+    paymentService.create(req.body).then(document => {
         res.json(document)
     }).catch(reason => { 
         res.json(reason) 
@@ -15,19 +15,38 @@ router.all('/', function(req, res){
 })
 
 router.get('/list', function(req, res){
-    res.json(transactionService.list());    
+    res.json(paymentService.list());    
+})
+
+router.get('/state', (req, res) => {
+    res.json(paymentService.state());
 })
 
 router.get('/:paymentId', function(req, res){
-    res.json(transactionService.find(req.params.paymentId));    
+    res.json(paymentService.find(req.params.paymentId));    
 })
 
 router.get('/:paymentId/transactions', (req, res) => {
-    res.json(transactionService.transactions(req.params.paymentId));
+    res.json(paymentService.transactions(req.params.paymentId));
 })
 
-router.get('/:paymentId/cancellations', (re, res) => {
+router.get('/:paymentId/approve', (req, res) => {
+    paymentService.approve(req.params.paymentId).then((payment) => {
+        res.json(payment);
+    })
+    .catch((reason) => {
+        res.status(reason.httpCode).send(reason.message)
+    })
+    
+})
 
+router.get('/:paymentId/deny', (req, res) => {
+    paymentService.deny(req.params.paymentId).then((payment) => {
+        res.json(payment);
+    })
+    .catch((reason) => {
+        res.status(reason.httpCode).send(reason.message)
+    })
 })
 
 module.exports = router;
