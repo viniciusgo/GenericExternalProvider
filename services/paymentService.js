@@ -23,6 +23,7 @@ function init() {
         db = dbi;
         return db.defaults({ payments: [], transactions: [] }).write();
     })
+    .catch(console.log)
 }
 
 function callCallBack(url, data) {
