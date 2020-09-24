@@ -106,7 +106,8 @@ router.get('/:paymentId/approve', (req, res) => {
  * @returns {Error}  default - Unexpected error
  */
 router.get('/:paymentId/deny', (req, res) => {
-    paymentService.deny(req.params.paymentId).then((payment) => {
+    paymentService.deny(req.params.paymentId)
+    .then((payment) => {
         res.json(payment);
     })
     .catch((reason) => {
