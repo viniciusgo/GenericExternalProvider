@@ -11,6 +11,7 @@ const FileSync = require('lowdb/adapters/FileAsync')
 
 const statuses = {
     approved: 'approved',
+    pendding: 'pending',
     undefined: 'undefined',
     denied: 'denied'
 }
@@ -44,27 +45,40 @@ function getTransactionsDB() {
 
 function newTransactionData(payment, newStatus) {
     return {
-        paymentId: payment.paymentId,
+        TId: payment.TId,
         status: newStatus || payment.status,
         date: moment().toJSON()
     };
 }
 
 function getStatus(payment) {
-    if(payment.installments >= 1 && payment.installments <= 5)
-        return statuses.approved;
-    else if(payment.installments >= 6 && payment.installments <= 10) 
-        return statuses.undefined;    
+    if(payment.Installments >= 1 && payment.Installments <= 5)
+        return statuses.pendding;
+    else if(payment.Installments >= 6 && payment.Installments <= 10) 
+        return statuses.approved;    
     return statuses.denied;
     
 }
 
-function create(data) {
+function create(data, host) {
     var payment = new Payment(data);
 
-    var existingPayment = find(payment.paymentId);
+    var existingPayment = find(payment.TId);
 
     if(existingPayment) return new Promise((resolve, reject) => { resolve(existingPayment); });
+
+    data.TId = data.TransactionId;
+    //if(data.PaymentMethod == 'PIX')
+    {
+        var pixData = utils.generatePixData(host);
+        data.PixKey = pixData.PixKey;
+        data.PixQRCodeURL = pixData.PixQRCodeURL;
+        data.PixQRCodeBase64 = pixData.PixQRCodeBase64;
+
+        var now = new Date();
+        now.setSeconds(now.getSeconds() + (data.ExpiresIn || 24*60*60));
+        data.ExpiresAt = now;
+    }
 
     return payment.validate().then(() => {
         return getPaymentsDB()
@@ -86,15 +100,15 @@ function create(data) {
     });
 }
 
-function find(paymentId) {
+function find(TId) {
     var payment =  getPaymentsDB()
         .cloneDeep()
-        .find({ paymentId: paymentId})
+        .find({ TId: TId})
         .value();
     if(payment)
         payment.transactions = 
             getTransactionsDB()
-            .filter({ paymentId: paymentId})
+            .filter({ TId: TId})
             .orderBy('date', 'desc')
             .take(1)
             .value()
@@ -102,9 +116,9 @@ function find(paymentId) {
     return payment;
 }
 
-function transactions(paymentId) {
+function transactions(TId) {
     return getTransactionsDB()
-        .find({ paymentId: paymentId})
+        .find({ TId: TId})
         .value();
 }
 
@@ -119,22 +133,22 @@ function updatePaymentStatus(payment, newStatus) {
     .write()
     .then((t) => {
         return getPaymentsDB()
-        .find({paymentId: payment.paymentId})
+        .find({TId: payment.TId})
         .assign({ status: newStatus})
         .write()
         .then((p) => {
-            return find(payment.paymentId);
+            return find(payment.TId);
         })
     })
 }
 
-function changePaymentStatus(paymentId, newStatus) {
+function changePaymentStatus(TId, newStatus) {
     return new Promise((resolve, reject) => {
-        var payment = find(paymentId);
+        var payment = find(TId);
         if(payment) {
             if(payment.transactions 
                 && payment.transactions[0].status 
-                && payment.transactions[0].status !== statuses.undefined) {
+                && payment.transactions[0].status === newStatus) {
                 reject(new utils.ErrorReason(`Payment already ${payment.transactions[0].status}`, 400))
             } else {
                 updatePaymentStatus(payment, newStatus)
@@ -149,12 +163,12 @@ function changePaymentStatus(paymentId, newStatus) {
     });
 }
 
-function approve(paymentId) {
-    return changePaymentStatus(paymentId, statuses.approved)
+function approve(TId) {
+    return changePaymentStatus(TId, statuses.approved)
 }
 
-function deny(paymentId) {
-    return changePaymentStatus(paymentId, statuses.denied)
+function deny(TId) {
+    return changePaymentStatus(TId, statuses.denied)
 }
 
 function state() {

@@ -26,7 +26,7 @@ paymentService.init();
  * @returns {Error}  default - Unexpected error
  */
 router.post('/', function(req, res){
-    paymentService.create(req.body).then(document => {
+    paymentService.create(req.body, req.protocol + '://' + req.headers.host).then(document => {
         res.json(document)
     }).catch(reason => { 
         res.json(reason) 
@@ -99,13 +99,13 @@ router.get('/:paymentId/approve', (req, res) => {
 
 /**
  * Nega o pagamaento já criado e realiza a chamada à callBackUrl passada na hora da criação do pagamento
- * @route GET /:paymentId/deny
+ * @route ALL /:paymentId/deny
  * @group payments - Operations about payments
  * @param {string} paymentId - ID único do pagamento
   * @returns {object} 200 - Objeto contendo as informações do pagamento
  * @returns {Error}  default - Unexpected error
  */
-router.get('/:paymentId/deny', (req, res) => {
+router.all('/:paymentId/deny', (req, res) => {
     paymentService.deny(req.params.paymentId)
     .then((payment) => {
         res.json(payment);
