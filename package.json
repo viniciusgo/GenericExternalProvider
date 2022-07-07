@@ -10,7 +10,7 @@
     "express": "^4.17.1",
     "express-swagger-generator": "^1.1.17",
     "lowdb": "^1.0.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "mongodb": "^3.5.5",
     "mongoose": "^5.9.5",
     "node-fetch": "^2.6.1"
